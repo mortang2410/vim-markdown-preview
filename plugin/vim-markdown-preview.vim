@@ -3,6 +3,9 @@
 "   git@github.com:JamshedVesuna/vim-markdown-preview.git
 "============================================================
 
+" this version only works for chromium. and I don't use the local function so
+" that doesn't work
+"
 let g:vmp_script_path = resolve(expand('<sfile>:p:h'))
 
 let g:vmp_osname = 'Unidentified'
@@ -60,14 +63,15 @@ endif
 
 function! Vim_Markdown_Preview()
   let b:curr_file = expand('%:p')
+  let b:short_noext_name = expand('%:t:r')
 
   if g:vim_markdown_preview_github == 1
     call system('grip "' . b:curr_file . '" --export /tmp/vim-markdown-preview.html --title vim-markdown-preview.html')
   elseif g:vim_markdown_preview_perl == 1
     call system('Markdown.pl "' . b:curr_file . '" > /tmp/vim-markdown-preview.html')
   elseif g:vim_markdown_preview_pandoc == 1
-    call system('pandoc --mathjax -f markdown "' . b:curr_file . '" > /tmp/vim-markdown-preview.html')
-  else
+    call system('pandoc --mathjax -f markdown --standalone "' . b:curr_file . '" > /tmp/vim-markdown-preview.html')
+else
     call system('markdown "' . b:curr_file . '" > /tmp/vim-markdown-preview.html')
   endif
   if v:shell_error
@@ -75,7 +79,7 @@ function! Vim_Markdown_Preview()
   endif
 
   if g:vmp_osname == 'unix'
-    let chrome_wid = system("xdotool search --name 'vim-markdown-preview.html'")
+    let chrome_wid = system('xdotool search --name "' . b:short_noext_name . ' - chromium"')
     if !chrome_wid
       if g:vim_markdown_preview_use_xdg_open == 1
         call system('xdg-open /tmp/vim-markdown-preview.html 1>/dev/null 2>/dev/null &')
@@ -83,6 +87,7 @@ function! Vim_Markdown_Preview()
         call system('chromium-browser /tmp/vim-markdown-preview.html 1>/dev/null 2>/dev/null &')
       endif
     else
+        " echoerr "lucky"
         let curr_wid = system('xdotool getwindowfocus')
         call system('xdotool windowmap ' . chrome_wid)
         call system('xdotool windowactivate ' . chrome_wid)
@@ -150,7 +155,7 @@ function! Vim_Markdown_Preview_Local()
       let b:vmp_preview_in_browser = system('osascript "' . g:vmp_search_script . '"')
       if b:vmp_preview_in_browser == 1
         call system('open -g vim-markdown-preview.html')
-      else
+    else
         call system('osascript "' . g:vmp_activate_script . '"')
       endif
     else
