@@ -178,8 +178,14 @@ elseif g:vim_markdown_preview_toggle == 1
   :exec 'autocmd Filetype markdown,md map <buffer> ' . g:vim_markdown_preview_hotkey . ' :call Vim_Markdown_Preview_Local()<CR>'
 elseif g:vim_markdown_preview_toggle == 2
   "Display images - Automatically call Vim_Markdown_Preview_Local() on buffer write
-  autocmd BufWritePost *.markdown,*.md :call Vim_Markdown_Preview_Local()
+  augroup VimMdPreview
+      autocmd!
+      autocmd BufWritePost *.markdown,*.md :call Vim_Markdown_Preview_Local()
+  augroup end
 elseif g:vim_markdown_preview_toggle == 3
   "Automatically call Vim_Markdown_Preview() on buffer write
-  autocmd BufWritePost *.markdown,*.md :call Vim_Markdown_Preview()
+  augroup VimMdPreview
+      autocmd!
+      autocmd BufWritePost *.markdown,*.md :call Vim_Markdown_Preview()
+  augroup end
 endif
