@@ -6,7 +6,8 @@
 " this version by default works for chromium on Linux and chrome on WSL. Add your own system's checks if you want.
 " I don't use the local function so that is not maintained.
 " On Linux, I use auto-preview on save. ON WSL, I set auto-compile on save and
-" view with set hotkey.
+" view with set hotkey. 
+" Be careful about browser names. Their cmmand line names and window names are different.
 let g:vmp_script_path = resolve(expand('<sfile>:p:h'))
 
 let g:vmp_osname = 'Unidentified'
@@ -117,7 +118,7 @@ function! Vim_Markdown_Preview()
               if g:vim_markdown_preview_use_xdg_open == 1
                   call system('xdg-open /tmp/vim-markdown-preview.html 1>/dev/null 2>/dev/null &')
               else
-                  call system( g:vim_markdown_preview_browser_cmd ' /tmp/vim-markdown-preview.html 1>/dev/null 2>/dev/null &')
+                  call system( g:vim_markdown_preview_browser_cmd . ' /tmp/vim-markdown-preview.html 1>/dev/null 2>/dev/null &')
               endif
           else
               " echoerr "lucky"
@@ -219,12 +220,12 @@ elseif g:vim_markdown_preview_toggle == 2
   "Display images - Automatically call Vim_Markdown_Preview_Local() on buffer write
   augroup VimMdPreview
       autocmd!
-      autocmd BufWritePost *.markdown,*.md :call Vim_Markdown_Preview_Local()
+      autocmd BufWritePost *.markdown,*.md call Vim_Markdown_Preview_Local()
   augroup END
 elseif g:vim_markdown_preview_toggle == 3
   "Automatically call Vim_Markdown_Preview() on buffer write
   augroup VimMdPreview
       autocmd!
-      autocmd BufWritePost *.markdown,*.md :call Vim_Markdown_Preview()
+      autocmd BufWritePost *.markdown,*.md call Vim_Markdown_Preview()
   augroup END
 endif
