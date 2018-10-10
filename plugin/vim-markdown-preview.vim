@@ -79,33 +79,39 @@ endif
 function! MyPandocCompile()
     let b:curr_file = expand('%:p')
     let b:short_noext_name = expand('%:t:r')
-    if g:vim_markdown_preview_github == 1
-        call system('grip "' . b:curr_file . '" --export /tmp/vim-markdown-preview.html --title vim-markdown-preview.html&')
-    elseif g:vim_markdown_preview_perl == 1
-        call system('Markdown.pl "' . b:curr_file . '" > /tmp/vim-markdown-preview.html &')
-    elseif g:vim_markdown_preview_pandoc == 1
-        call system('pandoc --mathjax -f markdown --standalone "' . b:curr_file . '" > /tmp/vim-markdown-preview.html &')
-    else
-        call system('markdown "' . b:curr_file . '" > /tmp/vim-markdown-preview.html &')
-    endif
-    if v:shell_error
-        echo 'Please install the necessary requirements: https://github.com/JamshedVesuna/vim-markdown-preview#requirements'
-    endif
 endfunction
 
 function! Vim_Markdown_Preview()
   let b:curr_file = expand('%:p')
   let b:short_noext_name = expand('%:t:r')
-  call MyPandocCompile()
+  call system('rm -rf /tmp/vim-markdown-preview.html')
+  "" get the compile command
+  if g:vim_markdown_preview_github == 1
+      let g:cmd_compile_vmp =  'grip "' . b:curr_file . '" --export /tmp/vim-markdown-preview.html --title vim-markdown-preview.html&'
+  elseif g:vim_markdown_preview_perl == 1
+      let g:cmd_compile_vmp =  'Markdown.pl "' . b:curr_file . '" > /tmp/vim-markdown-preview.html &'
+  elseif g:vim_markdown_preview_pandoc == 1
+      let g:cmd_compile_vmp = 'pandoc --mathjax -f markdown --standalone "' . b:curr_file . '" > /tmp/vim-markdown-preview.html'
+  else
+      let g:cmd_compile_vmp =  'markdown "' . b:curr_file . '" > /tmp/vim-markdown-preview.html &'
+  endif
+  if v:shell_error
+      echo 'Please install the necessary requirements: https://github.com/JamshedVesuna/vim-markdown-preview#requirements'
+  endif
+
   if g:vmp_osname == 'unix'
       let uname = system('uname -a') 
       """ test WSL is running. Requires wslpath from https://github.com/darealshinji/scripts/blob/master/wslpath
       if uname=~"Microsoft"
+          "" only launch browser after pandoc is done.
           let l:tmp_string =system('wslpath -w /tmp/vim-markdown-preview.html')
           let g:tmp_file_vmp_win = substitute(l:tmp_string,".$","","")
-          let g:cmd_vmp=g:vim_markdown_preview_browser_cmd  . ' "' . g:tmp_file_vmp_win . '"  &'
-          call system(g:cmd_vmp)
+          let g:cmd_view_vmp=g:vim_markdown_preview_browser_cmd  . ' "' . g:tmp_file_vmp_win . '"  '
+          let g:cmd_vmp= ' (   ' . g:cmd_compile_vmp . ' ; ' .  g:cmd_view_vmp . ' ) & ' 
+          call system( g:cmd_vmp )
+          echom "done"
       else "no WSL. Original behavior
+          call system(g:cmd_compile_vmp) 
           let chrome_wid = system('xdotool search --name "' . b:short_noext_name . ' - "' . g:vim_markdown_preview_browser)
           if !chrome_wid
               if g:vim_markdown_preview_use_xdg_open == 1
@@ -125,6 +131,7 @@ function! Vim_Markdown_Preview()
   endif
 
   if g:vmp_osname == 'mac'
+      call system(g:cmd_compile_vmp) 
       if g:vim_markdown_preview_browser == "Google Chrome"
           let b:vmp_preview_in_browser = system('osascript "' . g:vmp_search_script . '"')
           if b:vmp_preview_in_browser == 1
@@ -193,14 +200,14 @@ endfunction
 
 if g:vim_markdown_preview_toggle == 0
   "Maps vim_markdown_preview_hotkey to Vim_Markdown_Preview()
-  :exec 'autocmd Filetype markdown,md map <buffer> ' . g:vim_markdown_preview_hotkey . ' :call Vim_Markdown_Preview()<CR>'
+  exec 'autocmd Filetype markdown,md map <buffer> ' . g:vim_markdown_preview_hotkey . ':call Vim_Markdown_Preview()<CR>'
   if has('unix')
       let uname = system('uname -a') 
       """ test WSL is running
       if uname=~"Microsoft"
           augroup VimMdPreview
               autocmd!
-              autocmd BufWritePost *.markdown,*.md :call MyPandocCompile()
+              autocmd BufWritePost *.markdown,*.md call system(g:cmd_compile_vmp)
           augroup END
       endif
   endif
