@@ -77,16 +77,17 @@ if !exists("g:vim_markdown_preview_hotkey")
     let g:vim_markdown_preview_hotkey='<C-p>'
 endif
 
-function! MyPandocCompile()
-    let b:curr_file = expand('%:p')
-    let b:short_noext_name = expand('%:t:r')
+function! VmpActuallyCompile()
+    call VmpSetCompileCmd()
+    call system(g:cmd_compile_vmp . ' & ' )
+    if v:shell_error
+        echo 'Please install the necessary requirements: https://github.com/JamshedVesuna/vim-markdown-preview#requirements'
+    endif
 endfunction
 
-function! Vim_Markdown_Preview()
+function! VmpSetCompileCmd()
   let b:curr_file = expand('%:p')
   let b:short_noext_name = expand('%:t:r')
-  call system('rm -rf /tmp/vim-markdown-preview.html')
-  "" get the compile command
   if g:vim_markdown_preview_github == 1
       let g:cmd_compile_vmp =  'grip "' . b:curr_file . '" --export /tmp/vim-markdown-preview.html --title vim-markdown-preview.html&'
   elseif g:vim_markdown_preview_perl == 1
@@ -96,10 +97,14 @@ function! Vim_Markdown_Preview()
   else
       let g:cmd_compile_vmp =  'markdown "' . b:curr_file . '" > /tmp/vim-markdown-preview.html &'
   endif
-  if v:shell_error
-      echo 'Please install the necessary requirements: https://github.com/JamshedVesuna/vim-markdown-preview#requirements'
-  endif
+endfunction
 
+function! Vim_Markdown_Preview()
+  let b:curr_file = expand('%:p')
+  let b:short_noext_name = expand('%:t:r')
+  call system('rm -rf /tmp/vim-markdown-preview.html')
+  "" get the compile command
+  call VmpSetCompileCmd()
   if g:vmp_osname == 'unix'
       let uname = system('uname -a') 
       """ test WSL is running. Requires wslpath from https://github.com/darealshinji/scripts/blob/master/wslpath
@@ -108,7 +113,7 @@ function! Vim_Markdown_Preview()
           let l:tmp_string =system('wslpath -w /tmp/vim-markdown-preview.html')
           let g:tmp_file_vmp_win = substitute(l:tmp_string,".$","","")
           let g:cmd_view_vmp=g:vim_markdown_preview_browser_cmd  . ' "' . g:tmp_file_vmp_win . '"  '
-          let g:cmd_vmp= ' (   ' . g:cmd_compile_vmp . ' ; ' .  g:cmd_view_vmp . ' ) & ' 
+          let g:cmd_vmp=  g:cmd_compile_vmp . ' ; ' .  g:cmd_view_vmp 
           call system( g:cmd_vmp )
           echom "done"
       else "no WSL. Original behavior
@@ -201,16 +206,17 @@ endfunction
 
 if g:vim_markdown_preview_toggle == 0
   "Maps vim_markdown_preview_hotkey to Vim_Markdown_Preview()
-  exec 'autocmd Filetype markdown,md map <buffer> ' . g:vim_markdown_preview_hotkey . ':call Vim_Markdown_Preview()<CR>'
   if has('unix')
       let uname = system('uname -a') 
       """ test WSL is running
       if uname=~"Microsoft"
           augroup VimMdPreview
               autocmd!
-              autocmd BufWritePost *.markdown,*.md call system(g:cmd_compile_vmp)
+              autocmd BufWritePost *.markdown,*.md call VmpActuallyCompile() 
           augroup END
       endif
+  else
+      exec 'autocmd Filetype markdown,md map <buffer> ' . g:vim_markdown_preview_hotkey . ':call Vim_Markdown_Preview()<CR>'
   endif
 elseif g:vim_markdown_preview_toggle == 1
   "Display images - Maps vim_markdown_preview_hotkey to Vim_Markdown_Preview_Local() - saves the html file locally
