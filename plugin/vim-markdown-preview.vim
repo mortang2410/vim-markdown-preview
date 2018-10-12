@@ -79,10 +79,10 @@ endif
 
 function! VmpActuallyCompile()
     call VmpSetCompileCmd()
-    call system(g:cmd_compile_vmp  )
-    if v:shell_error
-        echo 'Please install the necessary requirements: https://github.com/JamshedVesuna/vim-markdown-preview#requirements'
-    endif
+    call system(g:cmd_compile_vmp . ' & ')
+    " if v:shell_error
+    "     echo 'Please install the necessary requirements: https://github.com/JamshedVesuna/vim-markdown-preview#requirements'
+    " endif
 endfunction
 
 function! VmpSetCompileCmd()
@@ -113,7 +113,7 @@ function! Vim_Markdown_Preview()
           let l:tmp_string =system('wslpath -w /tmp/vim-markdown-preview.html')
           let g:tmp_file_vmp_win = substitute(l:tmp_string,".$","","")
           let g:cmd_view_vmp=g:vim_markdown_preview_browser_cmd  . ' "' . g:tmp_file_vmp_win . '"  '
-          let g:cmd_vmp=  g:cmd_compile_vmp . ' ; ' .  g:cmd_view_vmp 
+          let g:cmd_vmp=  g:cmd_compile_vmp . ' ; ' .  g:cmd_view_vmp . ' & '
           call system( g:cmd_vmp )
           echom "done"
       else "no WSL. Original behavior
