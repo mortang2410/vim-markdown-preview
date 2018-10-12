@@ -79,7 +79,7 @@ endif
 
 function! VmpActuallyCompile()
     call VmpSetCompileCmd()
-    call system(g:cmd_compile_vmp . ' & ' )
+    call system(g:cmd_compile_vmp  )
     if v:shell_error
         echo 'Please install the necessary requirements: https://github.com/JamshedVesuna/vim-markdown-preview#requirements'
     endif
